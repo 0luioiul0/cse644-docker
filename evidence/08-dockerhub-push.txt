@@ -1,6 +1,6 @@
 ===============================================================
  CSE644 Docker Assignment — 08-dockerhub-push
- host date : 2026-08-08 06:56:06 UTC
+ host date : 2026-08-08 07:03:46 UTC
  docker    : Docker version 29.1.3, build 29.1.3-0ubuntu3~22.04.2
 ===============================================================
 
@@ -27,10 +27,10 @@ $ docker tag cse644-proxy-nginx:1.0 luioiul/cse644-proxy-nginx:1.0
 
 $ docker images --filter reference='luioiul/*' --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}'
 REPOSITORY                    TAG       IMAGE ID       SIZE
+luioiul/cse644-custom-nginx   1.0       ca3a36621118   73.7MB
 luioiul/cse644-haproxy        1.0       4f25f62031cd   46.7MB
 luioiul/cse644-proxy-nginx    1.0       f3f1f5b84ff2   73.7MB
 luioiul/cse644-python-web     1.0       b469601e9df2   74.1MB
-luioiul/cse644-custom-nginx   1.0       bcd70135d882   73.7MB
 
 ---------------------------------------------------------------
 STEP: Push the images
@@ -39,365 +39,317 @@ STEP: Push the images
 $ docker push luioiul/cse644-custom-nginx:1.0
 The push refers to repository [docker.io/luioiul/cse644-custom-nginx]
 d7e507024086: Waiting
-4e5b634bca35: Waiting
-81bd8ed7ec67: Waiting
-638f65c22918: Waiting
-195014b690cb: Waiting
-61ca4f733c80: Waiting
 34a64644b756: Waiting
-39c2ddfd6010: Waiting
-b464cfdf2a63: Waiting
-197eb75867ef: Waiting
-8051b8b0f59e: Waiting
+b31a44f44392: Waiting
+b26f86eac020: Waiting
+577cc0be462f: Waiting
 f18232174bc9: Waiting
-34a64644b756: Waiting
 39c2ddfd6010: Waiting
-b464cfdf2a63: Waiting
 197eb75867ef: Waiting
-8051b8b0f59e: Waiting
-f18232174bc9: Waiting
-d7e507024086: Waiting
 4e5b634bca35: Waiting
-81bd8ed7ec67: Waiting
-638f65c22918: Waiting
-195014b690cb: Waiting
 61ca4f733c80: Waiting
-8051b8b0f59e: Waiting
-f18232174bc9: Waiting
-d7e507024086: Waiting
-4e5b634bca35: Waiting
 81bd8ed7ec67: Waiting
-638f65c22918: Waiting
-195014b690cb: Waiting
-61ca4f733c80: Waiting
+b464cfdf2a63: Waiting
 34a64644b756: Waiting
+b31a44f44392: Waiting
+b26f86eac020: Waiting
+577cc0be462f: Waiting
+f18232174bc9: Waiting
 39c2ddfd6010: Waiting
-b464cfdf2a63: Waiting
 197eb75867ef: Waiting
-195014b690cb: Waiting
+4e5b634bca35: Waiting
 61ca4f733c80: Waiting
-34a64644b756: Waiting
-39c2ddfd6010: Waiting
+81bd8ed7ec67: Waiting
 b464cfdf2a63: Waiting
-197eb75867ef: Waiting
-8051b8b0f59e: Waiting
+d7e507024086: Waiting
+d7e507024086: Waiting
+34a64644b756: Waiting
+b31a44f44392: Waiting
+b26f86eac020: Waiting
+577cc0be462f: Waiting
 f18232174bc9: Waiting
-d7e507024086: Waiting
-4e5b634bca35: Waiting
-81bd8ed7ec67: Waiting
-638f65c22918: Waiting
-d7e507024086: Waiting
-4e5b634bca35: Waiting
-81bd8ed7ec67: Waiting
-638f65c22918: Waiting
-195014b690cb: Waiting
-61ca4f733c80: Waiting
-34a64644b756: Waiting
 39c2ddfd6010: Waiting
-b464cfdf2a63: Waiting
 197eb75867ef: Waiting
-8051b8b0f59e: Waiting
-f18232174bc9: Waiting
-197eb75867ef: Waiting
-8051b8b0f59e: Waiting
-f18232174bc9: Waiting
-d7e507024086: Waiting
 4e5b634bca35: Waiting
-81bd8ed7ec67: Waiting
-638f65c22918: Waiting
-195014b690cb: Waiting
 61ca4f733c80: Waiting
+81bd8ed7ec67: Waiting
+b464cfdf2a63: Waiting
+61ca4f733c80: Waiting
+81bd8ed7ec67: Waiting
+b464cfdf2a63: Waiting
+d7e507024086: Waiting
 34a64644b756: Waiting
+b31a44f44392: Waiting
+b26f86eac020: Waiting
+577cc0be462f: Waiting
+f18232174bc9: Waiting
 39c2ddfd6010: Waiting
-b464cfdf2a63: Waiting
-34a64644b756: Waiting
+197eb75867ef: Waiting
+4e5b634bca35: Waiting
 39c2ddfd6010: Waiting
-b464cfdf2a63: Waiting
 197eb75867ef: Waiting
-8051b8b0f59e: Waiting
-f18232174bc9: Waiting
-d7e507024086: Waiting
 4e5b634bca35: Waiting
+61ca4f733c80: Waiting
 81bd8ed7ec67: Waiting
-638f65c22918: Waiting
-195014b690cb: Waiting
-61ca4f733c80: Waiting
-638f65c22918: Waiting
-195014b690cb: Waiting
-61ca4f733c80: Waiting
+b464cfdf2a63: Waiting
+d7e507024086: Waiting
 34a64644b756: Waiting
+b31a44f44392: Waiting
+b26f86eac020: Waiting
+577cc0be462f: Waiting
+f18232174bc9: Waiting
+61ca4f733c80: Waiting
+81bd8ed7ec67: Waiting
+b464cfdf2a63: Waiting
+d7e507024086: Waiting
+34a64644b756: Waiting
+b31a44f44392: Waiting
+b26f86eac020: Waiting
+577cc0be462f: Waiting
+f18232174bc9: Waiting
 39c2ddfd6010: Waiting
-b464cfdf2a63: Waiting
 197eb75867ef: Waiting
-8051b8b0f59e: Waiting
-f18232174bc9: Waiting
-d7e507024086: Waiting
 4e5b634bca35: Waiting
-81bd8ed7ec67: Waiting
-81bd8ed7ec67: Waiting
-195014b690cb: Waiting
+4e5b634bca35: Waiting
 61ca4f733c80: Waiting
-34a64644b756: Waiting
-39c2ddfd6010: Mounted from library/nginx
+81bd8ed7ec67: Waiting
 b464cfdf2a63: Waiting
-197eb75867ef: Waiting
-f18232174bc9: Mounted from library/nginx
 d7e507024086: Waiting
-4e5b634bca35: Waiting
-61ca4f733c80: Mounted from library/nginx
-34a64644b756: Mounted from library/nginx
-b464cfdf2a63: Mounted from library/nginx
-197eb75867ef: Mounted from library/nginx
-d7e507024086: Mounted from library/nginx
-81bd8ed7ec67: Mounted from library/nginx
-638f65c22918: Pushed
-8051b8b0f59e: Pushed
-195014b690cb: Pushed
-4e5b634bca35: Pushed
-1.0: digest: sha256:bcd70135d88220262a3889ed53817b2c4a568b6f2f939da7f4e1e3a28f94c98c size: 2910
+34a64644b756: Waiting
+b31a44f44392: Waiting
+b26f86eac020: Waiting
+577cc0be462f: Waiting
+f18232174bc9: Waiting
+39c2ddfd6010: Waiting
+197eb75867ef: Waiting
+61ca4f733c80: Waiting
+81bd8ed7ec67: Waiting
+b464cfdf2a63: Waiting
+d7e507024086: Waiting
+34a64644b756: Waiting
+b31a44f44392: Waiting
+b26f86eac020: Waiting
+577cc0be462f: Waiting
+f18232174bc9: Waiting
+39c2ddfd6010: Waiting
+197eb75867ef: Waiting
+4e5b634bca35: Layer already exists
+b464cfdf2a63: Waiting
+d7e507024086: Waiting
+34a64644b756: Layer already exists
+b31a44f44392: Waiting
+b26f86eac020: Waiting
+577cc0be462f: Waiting
+f18232174bc9: Waiting
+39c2ddfd6010: Layer already exists
+197eb75867ef: Waiting
+61ca4f733c80: Waiting
+81bd8ed7ec67: Waiting
+197eb75867ef: Layer already exists
+61ca4f733c80: Layer already exists
+81bd8ed7ec67: Layer already exists
+b464cfdf2a63: Layer already exists
+d7e507024086: Layer already exists
+b31a44f44392: Waiting
+b26f86eac020: Layer already exists
+577cc0be462f: Layer already exists
+f18232174bc9: Layer already exists
+b31a44f44392: Layer already exists
+1.0: digest: sha256:ca3a36621118ab2275fffcc4bd1bf367084fd57374034cacc65d761b11b30ea1 size: 2910
 
 $ docker push luioiul/cse644-python-web:1.0
 The push refers to repository [docker.io/luioiul/cse644-python-web]
-c92d7f0deefc: Waiting
+55afa1ecc21d: Waiting
 7dccee89e389: Waiting
+c92d7f0deefc: Waiting
+55167a880c77: Waiting
 71475e2f9a6f: Waiting
 71186ca19814: Waiting
-55167a880c77: Waiting
-55afa1ecc21d: Waiting
 37daa602ac89: Waiting
 71186ca19814: Waiting
-55167a880c77: Waiting
-55afa1ecc21d: Waiting
 37daa602ac89: Waiting
-c92d7f0deefc: Waiting
+55afa1ecc21d: Waiting
 7dccee89e389: Waiting
+c92d7f0deefc: Waiting
+55167a880c77: Waiting
 71475e2f9a6f: Waiting
 71186ca19814: Waiting
+37daa602ac89: Waiting
+55afa1ecc21d: Waiting
+7dccee89e389: Waiting
+c92d7f0deefc: Waiting
 55167a880c77: Waiting
-55afa1ecc21d: Waiting
-37daa602ac89: Waiting
-c92d7f0deefc: Waiting
-7dccee89e389: Waiting
-71475e2f9a6f: Waiting
-55afa1ecc21d: Waiting
-37daa602ac89: Waiting
-c92d7f0deefc: Waiting
-7dccee89e389: Waiting
 71475e2f9a6f: Waiting
 71186ca19814: Waiting
-55167a880c77: Waiting
 37daa602ac89: Waiting
-c92d7f0deefc: Waiting
+55afa1ecc21d: Waiting
 7dccee89e389: Waiting
+c92d7f0deefc: Waiting
+55167a880c77: Waiting
 71475e2f9a6f: Waiting
 71186ca19814: Waiting
-55167a880c77: Waiting
-55afa1ecc21d: Waiting
-55afa1ecc21d: Waiting
 37daa602ac89: Waiting
-c92d7f0deefc: Waiting
+55afa1ecc21d: Waiting
 7dccee89e389: Waiting
+c92d7f0deefc: Waiting
+55167a880c77: Waiting
 71475e2f9a6f: Waiting
 71186ca19814: Waiting
-55167a880c77: Waiting
 37daa602ac89: Waiting
-c92d7f0deefc: Waiting
+55afa1ecc21d: Waiting
 7dccee89e389: Waiting
+c92d7f0deefc: Waiting
+55167a880c77: Waiting
+71475e2f9a6f: Waiting
+7dccee89e389: Waiting
+c92d7f0deefc: Waiting
+55167a880c77: Layer already exists
 71475e2f9a6f: Waiting
 71186ca19814: Waiting
-55167a880c77: Waiting
-55afa1ecc21d: Waiting
-55afa1ecc21d: Waiting
 37daa602ac89: Waiting
+55afa1ecc21d: Waiting
+71186ca19814: Waiting
+37daa602ac89: Waiting
+55afa1ecc21d: Waiting
+7dccee89e389: Layer already exists
+c92d7f0deefc: Layer already exists
 71475e2f9a6f: Waiting
-55167a880c77: Mounted from library/python
-37daa602ac89: Mounted from library/python
-71475e2f9a6f: Mounted from library/python
-55afa1ecc21d: Mounted from library/python
-c92d7f0deefc: Pushed
-7dccee89e389: Pushed
-71186ca19814: Pushed
+71475e2f9a6f: Layer already exists
+71186ca19814: Layer already exists
+37daa602ac89: Layer already exists
+55afa1ecc21d: Layer already exists
 1.0: digest: sha256:b469601e9df215517156d0549ca66f1f47a92dc27767499694a7939277e9f182 size: 1830
 
 $ docker push luioiul/cse644-haproxy:1.0
 The push refers to repository [docker.io/luioiul/cse644-haproxy]
-7ab1f44d385e: Waiting
 4f4fb700ef54: Waiting
 897e263c7fef: Waiting
-6697ba7f21e9: Waiting
-55afa1ecc21d: Waiting
 888d11bedb79: Waiting
+55afa1ecc21d: Waiting
 1b23aa1f4889: Waiting
+6697ba7f21e9: Waiting
 7ab1f44d385e: Waiting
-4f4fb700ef54: Waiting
-897e263c7fef: Waiting
-6697ba7f21e9: Waiting
 55afa1ecc21d: Waiting
-888d11bedb79: Waiting
 1b23aa1f4889: Waiting
 6697ba7f21e9: Waiting
-55afa1ecc21d: Waiting
-888d11bedb79: Waiting
-1b23aa1f4889: Waiting
 7ab1f44d385e: Waiting
 4f4fb700ef54: Waiting
 897e263c7fef: Waiting
 888d11bedb79: Waiting
 1b23aa1f4889: Waiting
+6697ba7f21e9: Waiting
 7ab1f44d385e: Waiting
 4f4fb700ef54: Waiting
 897e263c7fef: Waiting
-6697ba7f21e9: Waiting
+888d11bedb79: Waiting
+55afa1ecc21d: Waiting
+897e263c7fef: Waiting
+888d11bedb79: Waiting
 55afa1ecc21d: Waiting
 1b23aa1f4889: Waiting
+6697ba7f21e9: Waiting
+7ab1f44d385e: Waiting
+4f4fb700ef54: Waiting
 7ab1f44d385e: Waiting
 4f4fb700ef54: Waiting
 897e263c7fef: Waiting
-6697ba7f21e9: Waiting
+888d11bedb79: Waiting
 55afa1ecc21d: Waiting
+1b23aa1f4889: Layer already exists
+6697ba7f21e9: Waiting
 888d11bedb79: Waiting
-888d11bedb79: Waiting
-1b23aa1f4889: Waiting
+55afa1ecc21d: Waiting
+6697ba7f21e9: Layer already exists
 7ab1f44d385e: Waiting
-4f4fb700ef54: Waiting
+4f4fb700ef54: Layer already exists
 897e263c7fef: Waiting
-6697ba7f21e9: Waiting
-55afa1ecc21d: Waiting
-55afa1ecc21d: Waiting
-888d11bedb79: Waiting
-1b23aa1f4889: Waiting
-7ab1f44d385e: Waiting
-4f4fb700ef54: Waiting
-897e263c7fef: Waiting
-6697ba7f21e9: Waiting
-4f4fb700ef54: Waiting
-897e263c7fef: Mounted from library/haproxy
-6697ba7f21e9: Waiting
-55afa1ecc21d: Waiting
-1b23aa1f4889: Mounted from library/haproxy
-7ab1f44d385e: Mounted from library/haproxy
-55afa1ecc21d: Waiting
-4f4fb700ef54: Mounted from zenika/alpine-chrome
-6697ba7f21e9: Mounted from library/haproxy
-55afa1ecc21d: Mounted from luioiul/cse644-python-web
-888d11bedb79: Pushed
+897e263c7fef: Layer already exists
+888d11bedb79: Layer already exists
+55afa1ecc21d: Layer already exists
+7ab1f44d385e: Layer already exists
 1.0: digest: sha256:4f25f62031cd8140b6342986ce8deadbf3861dc12ad7c5f5ce2941ebbd5717f1 size: 1828
 
 $ docker push luioiul/cse644-proxy-nginx:1.0
 The push refers to repository [docker.io/luioiul/cse644-proxy-nginx]
 f18232174bc9: Waiting
-61ca4f733c80: Waiting
-90d57159f175: Waiting
-34a64644b756: Waiting
-81bd8ed7ec67: Waiting
 197eb75867ef: Waiting
+11366115062c: Waiting
+39c2ddfd6010: Waiting
 d7e507024086: Waiting
-779d87132e0f: Waiting
-11366115062c: Waiting
-b464cfdf2a63: Waiting
-39c2ddfd6010: Waiting
+34a64644b756: Waiting
 15f63f22064d: Waiting
 90d57159f175: Waiting
-34a64644b756: Waiting
-81bd8ed7ec67: Waiting
-197eb75867ef: Waiting
-d7e507024086: Waiting
-779d87132e0f: Waiting
-11366115062c: Waiting
-b464cfdf2a63: Waiting
-39c2ddfd6010: Waiting
-15f63f22064d: Waiting
-f18232174bc9: Waiting
 61ca4f733c80: Waiting
-b464cfdf2a63: Waiting
-39c2ddfd6010: Waiting
-15f63f22064d: Waiting
-f18232174bc9: Waiting
-61ca4f733c80: Waiting
-90d57159f175: Waiting
-34a64644b756: Waiting
 81bd8ed7ec67: Waiting
+b464cfdf2a63: Waiting
+779d87132e0f: Waiting
+779d87132e0f: Waiting
+f18232174bc9: Waiting
 197eb75867ef: Waiting
+11366115062c: Waiting
+39c2ddfd6010: Waiting
 d7e507024086: Waiting
-779d87132e0f: Waiting
-11366115062c: Waiting
-779d87132e0f: Waiting
-11366115062c: Waiting
-b464cfdf2a63: Waiting
-39c2ddfd6010: Waiting
+34a64644b756: Waiting
 15f63f22064d: Waiting
-f18232174bc9: Waiting
+90d57159f175: Waiting
 61ca4f733c80: Waiting
-90d57159f175: Waiting
-34a64644b756: Waiting
 81bd8ed7ec67: Waiting
-197eb75867ef: Waiting
-d7e507024086: Waiting
-197eb75867ef: Waiting
-d7e507024086: Waiting
-779d87132e0f: Waiting
-11366115062c: Waiting
 b464cfdf2a63: Waiting
-39c2ddfd6010: Waiting
-15f63f22064d: Waiting
-f18232174bc9: Waiting
+90d57159f175: Waiting
 61ca4f733c80: Waiting
-90d57159f175: Waiting
-34a64644b756: Waiting
 81bd8ed7ec67: Waiting
-90d57159f175: Waiting
-34a64644b756: Waiting
-81bd8ed7ec67: Waiting
+b464cfdf2a63: Waiting
+779d87132e0f: Waiting
+f18232174bc9: Waiting
 197eb75867ef: Waiting
+11366115062c: Waiting
+39c2ddfd6010: Waiting
 d7e507024086: Waiting
-779d87132e0f: Waiting
-11366115062c: Waiting
-b464cfdf2a63: Waiting
-39c2ddfd6010: Waiting
+34a64644b756: Waiting
 15f63f22064d: Waiting
-f18232174bc9: Waiting
+90d57159f175: Waiting
 61ca4f733c80: Waiting
+81bd8ed7ec67: Waiting
+b464cfdf2a63: Waiting
+779d87132e0f: Waiting
+f18232174bc9: Waiting
+197eb75867ef: Waiting
+11366115062c: Waiting
+39c2ddfd6010: Waiting
 d7e507024086: Waiting
-779d87132e0f: Waiting
-11366115062c: Waiting
-b464cfdf2a63: Waiting
-39c2ddfd6010: Waiting
+34a64644b756: Waiting
 15f63f22064d: Waiting
-f18232174bc9: Waiting
+d7e507024086: Layer already exists
+34a64644b756: Waiting
+15f63f22064d: Waiting
+90d57159f175: Waiting
 61ca4f733c80: Waiting
-90d57159f175: Waiting
-34a64644b756: Waiting
 81bd8ed7ec67: Waiting
-197eb75867ef: Waiting
-90d57159f175: Waiting
-34a64644b756: Waiting
-81bd8ed7ec67: Waiting
-197eb75867ef: Waiting
-d7e507024086: Mounted from luioiul/cse644-custom-nginx
+b464cfdf2a63: Layer already exists
 779d87132e0f: Waiting
+f18232174bc9: Waiting
+197eb75867ef: Waiting
 11366115062c: Waiting
-b464cfdf2a63: Waiting
 39c2ddfd6010: Waiting
-15f63f22064d: Waiting
 f18232174bc9: Waiting
-61ca4f733c80: Mounted from luioiul/cse644-custom-nginx
-b464cfdf2a63: Mounted from luioiul/cse644-custom-nginx
-39c2ddfd6010: Mounted from luioiul/cse644-custom-nginx
-f18232174bc9: Waiting
-90d57159f175: Waiting
-34a64644b756: Mounted from luioiul/cse644-custom-nginx
-81bd8ed7ec67: Waiting
-197eb75867ef: Mounted from luioiul/cse644-custom-nginx
-779d87132e0f: Waiting
+197eb75867ef: Waiting
 11366115062c: Waiting
+39c2ddfd6010: Waiting
+34a64644b756: Waiting
+15f63f22064d: Waiting
+90d57159f175: Waiting
+61ca4f733c80: Waiting
+81bd8ed7ec67: Layer already exists
 779d87132e0f: Waiting
-f18232174bc9: Waiting
-81bd8ed7ec67: Mounted from luioiul/cse644-custom-nginx
-f18232174bc9: Mounted from luioiul/cse644-custom-nginx
-15f63f22064d: Pushed
-90d57159f175: Pushed
-11366115062c: Pushed
-779d87132e0f: Pushed
+197eb75867ef: Layer already exists
+11366115062c: Layer already exists
+39c2ddfd6010: Layer already exists
+34a64644b756: Layer already exists
+15f63f22064d: Layer already exists
+90d57159f175: Layer already exists
+61ca4f733c80: Layer already exists
+779d87132e0f: Layer already exists
+f18232174bc9: Layer already exists
 1.0: digest: sha256:f3f1f5b84ff287e426b5ac13eed3f259f0a3eb06a2c4363ab29eb65e7fa4f3f1 size: 2910
 
 ---------------------------------------------------------------
@@ -425,5 +377,5 @@ STEP: Docker Hub links for the submission
   https://hub.docker.com/r/luioiul/cse644-proxy-nginx
 
 ===============================================================
- done: 2026-08-08 06:56:27 UTC
+ done: 2026-08-08 07:03:55 UTC
 ===============================================================
