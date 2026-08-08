@@ -1,6 +1,6 @@
 ===============================================================
  CSE644 Docker Assignment — 03-custom-nginx
- host date : 2026-08-08 06:01:23 UTC
+ host date : 2026-08-08 06:56:54 UTC
  docker    : Docker version 29.1.3, build 29.1.3-0ubuntu3~22.04.2
 ===============================================================
 
@@ -54,38 +54,36 @@ Sending build context to Docker daemon  9.728kB
 Step 1/8 : FROM nginx:1.27-alpine
  ---> 65645c7bb6a0
 Step 2/8 : LABEL org.opencontainers.image.title="cse644-custom-nginx"       org.opencontainers.image.description="Nginx customized with a hand-written landing page for CSE644 Docker assignment"       course="CSE644 Cloud Computing"
- ---> Running in ff6664a5767d
- ---> Removed intermediate container ff6664a5767d
+ ---> Using cache
  ---> 537a36892305
 Step 3/8 : RUN rm -rf /usr/share/nginx/html/*
- ---> Running in 1f35a90bf5f6
- ---> Removed intermediate container 1f35a90bf5f6
+ ---> Using cache
  ---> 8d90794e1e52
 Step 4/8 : COPY site/ /usr/share/nginx/html/
- ---> d174e2adfea6
+ ---> 788060881530
 Step 5/8 : COPY default.conf /etc/nginx/conf.d/default.conf
- ---> 5928242d9362
+ ---> 2ee72f85a5e4
 Step 6/8 : EXPOSE 80
- ---> Running in 4c760673a316
- ---> Removed intermediate container 4c760673a316
- ---> e7fb6fc1c1d6
+ ---> Running in 4bb2fcca1347
+ ---> Removed intermediate container 4bb2fcca1347
+ ---> e0a8246e8548
 Step 7/8 : RUN nginx -t
- ---> Running in 36dde6bd610c
+ ---> Running in 4b443d684cfb
 [91mnginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 [0m[91mnginx: configuration file /etc/nginx/nginx.conf test is successful
-[0m ---> Removed intermediate container 36dde6bd610c
- ---> 88dd72dcfbb7
+[0m ---> Removed intermediate container 4b443d684cfb
+ ---> 93a6c921a6f7
 Step 8/8 : HEALTHCHECK --interval=10s --timeout=3s --retries=3   CMD wget -qO- http://127.0.0.1/health || exit 1
- ---> Running in 9269408e41df
- ---> Removed intermediate container 9269408e41df
- ---> bcd70135d882
-Successfully built bcd70135d882
+ ---> Running in dbd47dc42727
+ ---> Removed intermediate container dbd47dc42727
+ ---> ca3a36621118
+Successfully built ca3a36621118
 Successfully tagged cse644-custom-nginx:1.0
 
 $ docker images cse644-custom-nginx:1.0
 WARNING: This output is designed for human readability. For machine-readable output, please use --format.
 IMAGE                     ID             DISK USAGE   CONTENT SIZE   EXTRA
-cse644-custom-nginx:1.0   bcd70135d882       73.7MB           21MB        
+cse644-custom-nginx:1.0   ca3a36621118       73.7MB           21MB        
 
 $ docker history cse644-custom-nginx:1.0 --format 'table {{.CreatedBy}}\t{{.Size}}' | head -8
 CREATED BY                                      SIZE
@@ -93,7 +91,7 @@ CREATED BY                                      SIZE
 /bin/sh -c nginx -t                             41kB
 /bin/sh -c #(nop)  EXPOSE 80                    0B
 /bin/sh -c #(nop) COPY file:f3242b1d6be995eb…   20.5kB
-/bin/sh -c #(nop) COPY dir:474a8ce03f16cf9ce…   28.7kB
+/bin/sh -c #(nop) COPY dir:46461e26d1a81f583…   28.7kB
 /bin/sh -c rm -rf /usr/share/nginx/html/*       20.5kB
 /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B
 [exit status: 141]
@@ -103,7 +101,7 @@ STEP: Run the customized image as a container
 ---------------------------------------------------------------
 
 $ docker run -d --name cse644-custom-nginx -p 8081:80 cse644-custom-nginx:1.0
-91f725a1e908d4f8b886276cbdeffe8770540232915b7536fbcd43a5f3fdd4ee
+20e15979748dca3b449f82a8cf392296db2c2059cce77fa058789b38d3bd3119
 
 $ docker ps --filter name=cse644-custom-nginx --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
 NAMES                 IMAGE                     STATUS                           PORTS
@@ -116,13 +114,13 @@ STEP: The custom page is being served (not the stock nginx welcome page)
 $ curl -sI http://localhost:8081/
 HTTP/1.1 200 OK
 Server: nginx/1.27.5
-Date: Sat, 08 Aug 2026 06:01:28 GMT
+Date: Sat, 08 Aug 2026 06:56:58 GMT
 Content-Type: text/html
-Content-Length: 1819
-Last-Modified: Sat, 08 Aug 2026 05:50:39 GMT
+Content-Length: 1786
+Last-Modified: Sat, 08 Aug 2026 06:56:45 GMT
 Connection: keep-alive
-ETag: "6a76c3af-71b"
-X-Served-By: 91f725a1e908
+ETag: "6a76d32d-6fa"
+X-Served-By: 20e15979748d
 Accept-Ranges: bytes
 
 
@@ -149,7 +147,7 @@ $ curl -s http://localhost:8081/ | head -20
 
 
 $ curl -s http://localhost:8081/whoami
-91f725a1e908
+20e15979748d
 
 $ curl -s http://localhost:8081/health
 ok
@@ -174,14 +172,14 @@ STEP: Nginx access log from inside the container
 ---------------------------------------------------------------
 
 $ docker logs cse644-custom-nginx 2>&1 | tail -5
-172.18.0.1 - - [08/Aug/2026:06:01:28 +0000] "HEAD / HTTP/1.1" 200 0 "-" "curl/7.81.0" "-"
-172.18.0.1 - - [08/Aug/2026:06:01:28 +0000] "GET / HTTP/1.1" 200 1819 "-" "curl/7.81.0" "-"
-172.18.0.1 - - [08/Aug/2026:06:01:28 +0000] "GET /whoami HTTP/1.1" 200 13 "-" "curl/7.81.0" "-"
-172.18.0.1 - - [08/Aug/2026:06:01:28 +0000] "GET / HTTP/1.1" 200 1819 "-" "curl/7.81.0" "-"
-172.18.0.1 - - [08/Aug/2026:06:01:30 +0000] "GET / HTTP/1.1" 200 1819 "-" "curl/7.81.0" "-"
+172.18.0.1 - - [08/Aug/2026:06:56:58 +0000] "HEAD / HTTP/1.1" 200 0 "-" "curl/7.81.0" "-"
+172.18.0.1 - - [08/Aug/2026:06:56:58 +0000] "GET / HTTP/1.1" 200 1786 "-" "curl/7.81.0" "-"
+172.18.0.1 - - [08/Aug/2026:06:56:58 +0000] "GET /whoami HTTP/1.1" 200 13 "-" "curl/7.81.0" "-"
+172.18.0.1 - - [08/Aug/2026:06:56:58 +0000] "GET / HTTP/1.1" 200 1786 "-" "curl/7.81.0" "-"
+172.18.0.1 - - [08/Aug/2026:06:57:01 +0000] "GET / HTTP/1.1" 200 1786 "-" "curl/7.81.0" "-"
 
 Container left running on http://localhost:8081/ for the browser screenshot.
 
 ===============================================================
- done: 2026-08-08 06:01:31 UTC
+ done: 2026-08-08 06:57:01 UTC
 ===============================================================

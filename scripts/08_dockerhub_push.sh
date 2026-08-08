@@ -24,15 +24,18 @@ fi
 start_log "08-dockerhub-push"
 
 step "Confirm the CLI is authenticated to Docker Hub"
-run "docker info --format 'Logged in as: {{.Username}}'"
-LOGGED_IN=$(docker info --format '{{.Username}}' 2>/dev/null)
-if [ -z "$LOGGED_IN" ]; then
+# Newer engines no longer expose .Username via `docker info`, so check that the
+# CLI has a stored credential for Docker Hub. Only the registry key is printed —
+# never the credential itself.
+run "python3 -c \"import json,sys;d=json.load(open(sys.argv[1]));print('registries with a stored credential:', list(d.get('auths',{}).keys()) or '(none)');print('credential helper:', d.get('credsStore','(none)'))\" \$HOME/.docker/config.json"
+
+if ! grep -q 'index.docker.io' "$HOME/.docker/config.json" 2>/dev/null; then
     echo
-    echo "Not logged in. Run 'docker login -u $USER_NAME' first (use a Docker Hub"
-    echo "access token as the password), then re-run this script."
+    echo "No Docker Hub credential found. Run 'docker login -u $USER_NAME' first"
+    echo "(paste a Docker Hub access token at the Password prompt), then re-run."
     exit 1
 fi
-echo "(The credential itself is stored by the Docker CLI and is never printed here.)"
+echo "(The credential itself is never read or printed by this script.)"
 
 IMAGES=(
     "${PREFIX}-custom-nginx:1.0"

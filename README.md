@@ -8,7 +8,7 @@ so any line can be copied and re-run.
 | | |
 |---|---|
 | Student | **Chi Zhang** |
-| Docker Hub username | **[your-dockerhub-username]** |
+| Docker Hub username | **luioiul** |
 | GitHub username | **0luioiul0** |
 | Docker engine used | 29.1.3 on Ubuntu 22.04 (WSL2) |
 
@@ -187,18 +187,18 @@ Four images are published:
 
 | Local image | Docker Hub repository |
 |---|---|
-| `cse644-custom-nginx:1.0` | `[your-dockerhub-username]/cse644-custom-nginx` |
-| `cse644-python-web:1.0` | `[your-dockerhub-username]/cse644-python-web` |
-| `cse644-haproxy:1.0` | `[your-dockerhub-username]/cse644-haproxy` |
-| `cse644-proxy-nginx:1.0` | `[your-dockerhub-username]/cse644-proxy-nginx` |
+| `cse644-custom-nginx:1.0` | `luioiul/cse644-custom-nginx` |
+| `cse644-python-web:1.0` | `luioiul/cse644-python-web` |
+| `cse644-haproxy:1.0` | `luioiul/cse644-haproxy` |
+| `cse644-proxy-nginx:1.0` | `luioiul/cse644-proxy-nginx` |
 
 Authentication uses a **Docker Hub personal access token**, not the account
 password — generate it at Docker Hub → Account settings → Personal access tokens
 with *Read & Write* scope. Log in interactively, then run the push script:
 
 ```bash
-docker login -u [your-dockerhub-username]      # paste the access token at the prompt
-bash scripts/08_dockerhub_push.sh [your-dockerhub-username]
+docker login -u luioiul      # paste the access token at the prompt
+bash scripts/08_dockerhub_push.sh luioiul
 ```
 
 The script refuses to run if the CLI is not authenticated, and it never prints,

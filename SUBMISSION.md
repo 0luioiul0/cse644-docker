@@ -5,12 +5,12 @@
 | Item | Value |
 |---|---|
 | Name | **Chi Zhang** |
-| Docker Hub username | **[your-dockerhub-username]** |
+| Docker Hub username | **luioiul** |
 | GitHub username | **0luioiul0** |
-| Docker Hub profile | https://hub.docker.com/u/[your-dockerhub-username] |
-| Customized Nginx image | https://hub.docker.com/r/[your-dockerhub-username]/cse644-custom-nginx |
-| Python web server image | https://hub.docker.com/r/[your-dockerhub-username]/cse644-python-web |
-| HAProxy + Nginx proxy project | https://github.com/0luioiul0/cse644-docker/tree/main/03-haproxy-nginx <br> images: [`.../cse644-haproxy`](https://hub.docker.com/r/[your-dockerhub-username]/cse644-haproxy) and [`.../cse644-proxy-nginx`](https://hub.docker.com/r/[your-dockerhub-username]/cse644-proxy-nginx) |
+| Docker Hub profile | https://hub.docker.com/u/luioiul |
+| Customized Nginx image | https://hub.docker.com/r/luioiul/cse644-custom-nginx |
+| Python web server image | https://hub.docker.com/r/luioiul/cse644-python-web |
+| HAProxy + Nginx proxy project | https://github.com/0luioiul0/cse644-docker/tree/main/03-haproxy-nginx <br> images: [`.../cse644-haproxy`](https://hub.docker.com/r/luioiul/cse644-haproxy) and [`.../cse644-proxy-nginx`](https://hub.docker.com/r/luioiul/cse644-proxy-nginx) |
 | GitHub repository | https://github.com/0luioiul0/cse644-docker |
 
 ## Required repository contents
