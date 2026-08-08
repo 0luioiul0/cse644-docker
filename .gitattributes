@@ -1,0 +1,7 @@
+# These scripts and configs are consumed by Linux containers and by bash.
+# Force LF everywhere so a clone on Windows does not produce CRLF files that
+# break `#!/usr/bin/env bash` or Nginx/HAProxy config parsing.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
