@@ -1,0 +1,53 @@
+# Requirement 7: HAProxy as a proxy in front of Nginx.
+#
+#   client -> localhost:8082 -> haproxy:80 -> (web1:80 | web2:80)
+#
+# Only HAProxy publishes host ports. The Nginx containers sit on the `edge`
+# network with no port mapping, so from outside this machine the proxy is the
+# only way in — that is what makes this a proxy demonstration rather than two
+# independently exposed web servers.
+
+name: cse644-proxy
+
+services:
+  haproxy:
+    build: ./haproxy
+    image: cse644-haproxy:1.0
+    container_name: cse644-haproxy
+    ports:
+      - "8082:80"     # public entry point
+      - "8404:8404"   # HAProxy stats page
+    networks:
+      - edge
+    depends_on:
+      web1:
+        condition: service_healthy
+      web2:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web1:
+    build: ./nginx
+    image: cse644-proxy-nginx:1.0
+    container_name: cse644-web1
+    hostname: web1
+    networks:
+      - edge
+    # deliberately no `ports:` — not reachable from the host
+    restart: unless-stopped
+
+  web2:
+    build: ./nginx                  # same build context as web1
+    image: cse644-proxy-nginx:1.0   # same image, second replica
+    container_name: cse644-web2
+    hostname: web2
+    networks:
+      - edge
+    depends_on:
+      - web1
+    restart: unless-stopped
+
+networks:
+  edge:
+    name: cse644-edge
+    driver: bridge

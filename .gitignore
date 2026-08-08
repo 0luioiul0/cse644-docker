@@ -1,0 +1,20 @@
+# Never commit credentials — Docker Hub tokens, API keys, private keys.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+.docker/
+config.json
+**/secrets/
+*token*
+*credential*
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/
+.vscode/

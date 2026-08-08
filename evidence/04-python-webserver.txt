@@ -1,0 +1,213 @@
+===============================================================
+ CSE644 Docker Assignment — 04-python-webserver
+ host date : 2026-08-08 06:01:31 UTC
+ docker    : Docker version 29.1.3, build 29.1.3-0ubuntu3~22.04.2
+===============================================================
+
+---------------------------------------------------------------
+STEP: Application source code and Dockerfile
+---------------------------------------------------------------
+
+$ cat /mnt/c/Users/zhang/OneDrive/Desktop/cse644-docker/02-python-webserver/Dockerfile
+# Requirement 6: simple Python web server, containerized, serving on port 8888
+FROM python:3.12-alpine
+
+LABEL org.opencontainers.image.title="cse644-python-web" \
+      org.opencontainers.image.description="Standard-library Python web server on port 8888 for CSE644 Docker assignment" \
+      course="CSE644 Cloud Computing"
+
+ENV PORT=8888 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+COPY app.py .
+
+# Run as a non-root user: the container never needs root to bind 8888
+RUN adduser -D -u 10001 appuser && chown -R appuser /app
+USER appuser
+
+EXPOSE 8888
+
+HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:8888/health || exit 1
+
+CMD ["python", "app.py"]
+
+$ head -20 /mnt/c/Users/zhang/OneDrive/Desktop/cse644-docker/02-python-webserver/app.py
+#!/usr/bin/env python3
+"""Minimal Python web server for CSE644 Docker assignment (requirement 6).
+
+Standard library only, so the image stays small and the build needs no package
+index. Listens on port 8888 as required.
+
+Routes
+    GET /         HTML landing page
+    GET /api/info JSON with container hostname, uptime and request count
+    GET /health   plain-text health check used by HEALTHCHECK and HAProxy
+"""
+
+import json
+import os
+import platform
+import socket
+import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+PORT = int(os.environ.get("PORT", "8888"))
+
+$ grep -n 'PORT' /mnt/c/Users/zhang/OneDrive/Desktop/cse644-docker/02-python-webserver/app.py | head -5
+20:PORT = int(os.environ.get("PORT", "8888"))
+100:                "port": PORT,
+111:                port=PORT,
+128:    server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
+129:    print(f"cse644-python-web listening on 0.0.0.0:{PORT} "
+
+---------------------------------------------------------------
+STEP: Build the image
+---------------------------------------------------------------
+
+$ docker build -t cse644-python-web:1.0 /mnt/c/Users/zhang/OneDrive/Desktop/cse644-docker/02-python-webserver
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  8.704kB
+Step 1/10 : FROM python:3.12-alpine
+ ---> 6d43704baacd
+Step 2/10 : LABEL org.opencontainers.image.title="cse644-python-web"       org.opencontainers.image.description="Standard-library Python web server on port 8888 for CSE644 Docker assignment"       course="CSE644 Cloud Computing"
+ ---> Running in 68814f099646
+ ---> Removed intermediate container 68814f099646
+ ---> 84e8d4cb7dbc
+Step 3/10 : ENV PORT=8888     PYTHONUNBUFFERED=1
+ ---> Running in 77a4b50b0bfb
+ ---> Removed intermediate container 77a4b50b0bfb
+ ---> 593221b20d5a
+Step 4/10 : WORKDIR /app
+ ---> Running in 0194a8a46b70
+ ---> Removed intermediate container 0194a8a46b70
+ ---> f261aa063744
+Step 5/10 : COPY app.py .
+ ---> 37504095e13c
+Step 6/10 : RUN adduser -D -u 10001 appuser && chown -R appuser /app
+ ---> Running in fa4cb5003db9
+ ---> Removed intermediate container fa4cb5003db9
+ ---> dfeb50802417
+Step 7/10 : USER appuser
+ ---> Running in f053a5255488
+ ---> Removed intermediate container f053a5255488
+ ---> 00852bd19151
+Step 8/10 : EXPOSE 8888
+ ---> Running in f02937096963
+ ---> Removed intermediate container f02937096963
+ ---> 2c46dfb015fd
+Step 9/10 : HEALTHCHECK --interval=10s --timeout=3s --retries=3   CMD wget -qO- http://127.0.0.1:8888/health || exit 1
+ ---> Running in c38ca183a217
+ ---> Removed intermediate container c38ca183a217
+ ---> bb7bce5e4491
+Step 10/10 : CMD ["python", "app.py"]
+ ---> Running in fbf33585acff
+ ---> Removed intermediate container fbf33585acff
+ ---> b469601e9df2
+Successfully built b469601e9df2
+Successfully tagged cse644-python-web:1.0
+
+$ docker images cse644-python-web:1.0
+WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+IMAGE                   ID             DISK USAGE   CONTENT SIZE   EXTRA
+cse644-python-web:1.0   b469601e9df2       74.1MB           18MB        
+
+---------------------------------------------------------------
+STEP: Run the container with port 8888 published
+---------------------------------------------------------------
+
+$ docker run -d --name cse644-python-web -p 8888:8888 cse644-python-web:1.0
+0e0d8e7c25316a18986719925e4a7338b61e1b429ff5d0f8ad9b4ff8b80ad1c4
+
+$ docker ps --filter name=cse644-python-web --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+NAMES               IMAGE                   STATUS                           PORTS
+cse644-python-web   cse644-python-web:1.0   Up 1 second (health: starting)   0.0.0.0:8888->8888/tcp, [::]:8888->8888/tcp
+
+---------------------------------------------------------------
+STEP: Port 8888 is in use — on the host and inside the container
+---------------------------------------------------------------
+
+$ docker port cse644-python-web
+8888/tcp -> 0.0.0.0:8888
+8888/tcp -> [::]:8888
+
+$ ss -ltn | grep ':8888' || netstat -ltn 2>/dev/null | grep ':8888'
+LISTEN 0      4096          0.0.0.0:8888       0.0.0.0:*          
+LISTEN 0      4096             [::]:8888          [::]:*          
+
+$ docker exec cse644-python-web sh -c 'netstat -ltn 2>/dev/null | grep 8888 || echo listening on 8888'
+tcp        0      0 0.0.0.0:8888            0.0.0.0:*               LISTEN      
+
+---------------------------------------------------------------
+STEP: Command-line access to the running service
+---------------------------------------------------------------
+
+$ curl -sI http://localhost:8888/
+HTTP/1.1 200 OK
+Server: CSE644PyServer/1.0 Python/3.12.13
+Date: Sat, 08 Aug 2026 06:01:35 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 1922
+X-Served-By: 0e0d8e7c2531
+
+
+$ curl -s http://localhost:8888/api/info
+{
+  "service": "cse644-python-web",
+  "hostname": "0e0d8e7c2531",
+  "ip": "172.18.0.3",
+  "python": "3.12.13",
+  "port": 8888,
+  "uptime_seconds": 1.3,
+  "requests_served": 3
+}
+
+$ curl -s http://localhost:8888/health
+ok
+
+$ curl -s http://localhost:8888/ | head -12
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSE644 &middot; Python web server in Docker</title>
+<style>
+ body{margin:0;padding:3rem 1.25rem;background:#0f1115;color:#e7e9ee;
+      font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+ .card{max-width:44rem;margin:0 auto;background:#171a21;border:1px solid #262b36;
+        border-radius:14px;padding:2.5rem}
+ .eyebrow{margin:0 0 .5rem;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:#4aa3ff}
+
+$ curl -s -o /dev/null -w 'HTTP %{http_code} in %{time_total}s\n' http://localhost:8888/
+HTTP 200 in 0.000729s
+
+---------------------------------------------------------------
+STEP: The server is running as a non-root user inside the container
+---------------------------------------------------------------
+
+$ docker exec cse644-python-web id
+uid=10001(appuser) gid=10001(appuser) groups=10001(appuser)
+
+---------------------------------------------------------------
+STEP: Application log from the container (each request is logged)
+---------------------------------------------------------------
+
+$ docker logs cse644-python-web 2>&1 | tail -8
+cse644-python-web listening on 0.0.0.0:8888 (hostname=0e0d8e7c2531)
+[08/Aug/2026 06:01:35] "GET /health HTTP/1.1" 200 -
+[08/Aug/2026 06:01:35] "HEAD / HTTP/1.1" 200 -
+[08/Aug/2026 06:01:35] "GET /api/info HTTP/1.1" 200 -
+[08/Aug/2026 06:01:35] "GET /health HTTP/1.1" 200 -
+[08/Aug/2026 06:01:35] "GET / HTTP/1.1" 200 -
+[08/Aug/2026 06:01:35] "GET / HTTP/1.1" 200 -
+
+Container left running on http://localhost:8888/ for the browser screenshot.
+
+===============================================================
+ done: 2026-08-08 06:01:35 UTC
+===============================================================

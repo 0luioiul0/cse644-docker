@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CSE644 Docker Assignment — Customized Nginx</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card">
+    <p class="eyebrow">Cloud Computing CSE644 &middot; Docker Assignment</p>
+    <h1>This page is served from a customized Nginx image.</h1>
+    <p class="lede">
+      The base image is <code>nginx:1.27-alpine</code> straight from Docker Hub. The Dockerfile in
+      <code>01-custom-nginx/</code> deletes the stock welcome page, copies this hand-written site in
+      its place, and drops in a small server block that adds an <code>X-Served-By</code> header and a
+      <code>/whoami</code> endpoint. If you are reading this instead of the default Nginx landing
+      page, the customization built and ran correctly.
+    </p>
+
+    <section>
+      <h2>What is running behind this page</h2>
+      <dl>
+        <div><dt>Base image</dt><dd>nginx:1.27-alpine</dd></div>
+        <div><dt>Built image</dt><dd>cse644-custom-nginx:1.0</dd></div>
+        <div><dt>Published port</dt><dd>8081 &rarr; 80</dd></div>
+        <div><dt>Extra endpoints</dt><dd><code>/whoami</code>, <code>/health</code></dd></div>
+      </dl>
+    </section>
+
+    <section>
+      <h2>Verify it yourself</h2>
+      <pre><code>curl -i http://localhost:8081/          # look for X-Served-By
+curl    http://localhost:8081/whoami    # container hostname
+curl    http://localhost:8081/health    # ok</code></pre>
+    </section>
+
+    <footer>
+      <span>Student: <strong>Chi Zhang</strong></span>
+      <span>Docker Hub: <strong>[your-dockerhub-username]</strong></span>
+      <span>GitHub: <strong>0luioiul0</strong></span>
+    </footer>
+  </main>
+</body>
+</html>

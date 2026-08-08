@@ -1,0 +1,249 @@
+===============================================================
+ CSE644 Docker Assignment — 07-networking
+ host date : 2026-08-08 06:02:50 UTC
+ docker    : Docker version 29.1.3, build 29.1.3-0ubuntu3~22.04.2
+===============================================================
+
+---------------------------------------------------------------
+STEP: Networks that exist before we start
+---------------------------------------------------------------
+
+$ docker network ls
+NETWORK ID     NAME              DRIVER    SCOPE
+de44d9c7d547   bridge            bridge    local
+a981d456a30c   cse644-edge       bridge    local
+fad966fa1d0c   host              host      local
+ccff707e02f7   jenkins_default   bridge    local
+3ddf14d90045   none              null      local
+
+---------------------------------------------------------------
+STEP: 1/3 BRIDGE NETWORK — create a user-defined bridge
+---------------------------------------------------------------
+
+$ docker network create --driver bridge --subnet 172.30.0.0/24 cse644-bridge
+36bfdb5f8eead03971fc81fd96c7d171beb4228d3a9f5acfd5e09b49b918c6dd
+
+$ docker network inspect cse644-bridge --format 'name={{.Name}} driver={{.Driver}} subnet={{range .IPAM.Config}}{{.Subnet}}{{end}} internal={{.Internal}}'
+name=cse644-bridge driver=bridge subnet=172.30.0.0/24 internal=false
+
+---------------------------------------------------------------
+STEP: Attach two containers to the bridge network
+---------------------------------------------------------------
+
+$ docker run -d --name cse644-net-a --network cse644-bridge alpine:3.20 sleep 3600
+a56e5fbbd6b82ae51e392fde4ab01d6076f7e4d0bb45ecde37bef3a1e58ac1b1
+
+$ docker run -d --name cse644-net-b --network cse644-bridge alpine:3.20 sleep 3600
+a87ed4dda9c992e5bd3715de947f002d5a6e4f6ddadea9fb47c81ce51e466d60
+
+$ docker network inspect cse644-bridge --format '{{range .Containers}}{{.Name}} = {{.IPv4Address}}{{println}}{{end}}'
+cse644-net-a = 172.30.0.2/24
+cse644-net-b = 172.30.0.3/24
+
+
+---------------------------------------------------------------
+STEP: Each container has an address on the bridge subnet
+---------------------------------------------------------------
+
+$ docker exec cse644-net-a ip -4 addr show eth0 | grep inet
+    inet 172.30.0.2/24 brd 172.30.0.255 scope global eth0
+
+$ docker exec cse644-net-b ip -4 addr show eth0 | grep inet
+    inet 172.30.0.3/24 brd 172.30.0.255 scope global eth0
+
+---------------------------------------------------------------
+STEP: Containers reach each other BY NAME (built-in DNS on user-defined bridges)
+---------------------------------------------------------------
+
+$ docker exec cse644-net-a ping -c 3 cse644-net-b
+PING cse644-net-b (172.30.0.3): 56 data bytes
+64 bytes from 172.30.0.3: seq=0 ttl=64 time=0.098 ms
+64 bytes from 172.30.0.3: seq=1 ttl=64 time=0.084 ms
+64 bytes from 172.30.0.3: seq=2 ttl=64 time=0.063 ms
+
+--- cse644-net-b ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+round-trip min/avg/max = 0.063/0.081/0.098 ms
+
+$ docker exec cse644-net-b ping -c 3 cse644-net-a
+PING cse644-net-a (172.30.0.2): 56 data bytes
+64 bytes from 172.30.0.2: seq=0 ttl=64 time=0.075 ms
+64 bytes from 172.30.0.2: seq=1 ttl=64 time=0.079 ms
+64 bytes from 172.30.0.2: seq=2 ttl=64 time=0.061 ms
+
+--- cse644-net-a ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+round-trip min/avg/max = 0.061/0.071/0.079 ms
+
+$ docker exec cse644-net-a nslookup cse644-net-b 2>&1 | tail -4
+Non-authoritative answer:
+Name:	cse644-net-b
+Address: 172.30.0.3
+
+
+---------------------------------------------------------------
+STEP: Containers on the bridge can also reach the outside world (NAT via the host)
+---------------------------------------------------------------
+
+$ docker exec cse644-net-a ping -c 2 1.1.1.1
+PING 1.1.1.1 (1.1.1.1): 56 data bytes
+64 bytes from 1.1.1.1: seq=0 ttl=52 time=51.235 ms
+64 bytes from 1.1.1.1: seq=1 ttl=52 time=23.273 ms
+
+--- 1.1.1.1 ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 23.273/37.254/51.235 ms
+
+---------------------------------------------------------------
+STEP: Name resolution does NOT work on the legacy default bridge — the contrast
+---------------------------------------------------------------
+
+$ docker run -d --name cse644-default-a alpine:3.20 sleep 3600
+13523725e3d2978f0832494674ea76d713c3c7c0e7d2b53eb1a3967dbb7670d1
+
+$ docker exec cse644-default-a ping -c 2 -W 2 cse644-net-b
+ping: bad address 'cse644-net-b'
+[exit status: 1 — failure expected here, this is the evidence]
+The default bridge has no embedded DNS server, and the two containers are
+on different networks anyway. That is why user-defined bridges are preferred.
+
+$ docker rm -f cse644-default-a
+cse644-default-a
+
+---------------------------------------------------------------
+STEP: 2/3 HOST NETWORK — the container shares the host network namespace
+---------------------------------------------------------------
+
+$ ip -4 addr show | grep -E 'inet ' | head -5
+    inet 127.0.0.1/8 scope host lo
+    inet 10.255.255.254/32 brd 10.255.255.254 scope global lo
+    inet 172.17.132.135/20 brd 172.17.143.255 scope global eth0
+    inet 172.19.0.1/16 brd 172.19.255.255 scope global br-ccff707e02f7
+    inet 172.18.0.1/16 brd 172.18.255.255 scope global docker0
+^ addresses on the HOST
+
+$ docker run --rm --network host alpine:3.20 ip -4 addr show | grep -E 'inet ' | head -5
+    inet 127.0.0.1/8 scope host lo
+    inet 10.255.255.254/32 brd 10.255.255.254 scope global lo
+    inet 172.17.132.135/20 brd 172.17.143.255 scope global eth0
+    inet 172.19.0.1/16 brd 172.19.255.255 scope global br-ccff707e02f7
+    inet 172.18.0.1/16 brd 172.18.255.255 scope global docker0
+^ the same addresses seen from INSIDE a --network host container
+
+---------------------------------------------------------------
+STEP: The host-network container has no separate eth0 and no NAT
+---------------------------------------------------------------
+
+$ docker run --rm --network host alpine:3.20 hostname -i
+127.0.1.1
+
+$ docker run --rm --network host alpine:3.20 sh -c 'ip route | head -3'
+default via 172.17.128.1 dev eth0 
+172.17.128.0/20 dev eth0 scope link  src 172.17.132.135 
+172.18.0.0/16 dev docker0 scope link  src 172.18.0.1 
+
+---------------------------------------------------------------
+STEP: A server on the host network needs no -p publishing
+---------------------------------------------------------------
+
+$ docker run -d --name cse644-net-host --network host cse644-custom-nginx:1.0 2>/dev/null || docker run -d --name cse644-net-host --network host nginx:1.27-alpine
+665712ba0806ec1f847a12097efbed23e17638cc7dd72a00842915d38ca1ea16
+
+$ sleep 2
+
+$ docker inspect cse644-net-host --format 'NetworkMode={{.HostConfig.NetworkMode}}  PublishedPorts={{.NetworkSettings.Ports}}'
+NetworkMode=host  PublishedPorts=map[]
+
+$ curl -sI http://localhost:80/ | head -3
+HTTP/1.1 200 OK
+Server: nginx/1.27.5
+Date: Sat, 08 Aug 2026 06:03:08 GMT
+No -p flag was used, yet port 80 answers on the host: the container is
+listening directly in the host's network namespace.
+
+$ docker rm -f cse644-net-host
+cse644-net-host
+
+---------------------------------------------------------------
+STEP: 3/3 ISOLATED NETWORK — created with --internal (no route to the outside)
+---------------------------------------------------------------
+
+$ docker network create --driver bridge --internal --subnet 172.31.0.0/24 cse644-internal
+24c3a432d01207976131fa727e31acc782076d3db077e9126073aaeca2309b1e
+
+$ docker network inspect cse644-internal --format 'name={{.Name}} internal={{.Internal}} subnet={{range .IPAM.Config}}{{.Subnet}}{{end}}'
+name=cse644-internal internal=true subnet=172.31.0.0/24
+
+$ docker run -d --name cse644-iso-a --network cse644-internal alpine:3.20 sleep 3600
+2371d8724af7164b187e1dc04f30444145b457ba6bb39b58476814eb8e824f29
+
+$ docker run -d --name cse644-iso-b --network cse644-internal alpine:3.20 sleep 3600
+15a860c6ffa82faf9db75ffd6cb179953f39b85cdfbda6260a876a3ca05fab77
+
+---------------------------------------------------------------
+STEP: Inside the isolated network, containers still talk to each other
+---------------------------------------------------------------
+
+$ docker exec cse644-iso-a ping -c 3 cse644-iso-b
+PING cse644-iso-b (172.31.0.3): 56 data bytes
+64 bytes from 172.31.0.3: seq=0 ttl=64 time=0.092 ms
+64 bytes from 172.31.0.3: seq=1 ttl=64 time=0.073 ms
+64 bytes from 172.31.0.3: seq=2 ttl=64 time=0.076 ms
+
+--- cse644-iso-b ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+round-trip min/avg/max = 0.073/0.080/0.092 ms
+
+---------------------------------------------------------------
+STEP: But they CANNOT reach the internet — this failure is the evidence
+---------------------------------------------------------------
+
+$ docker exec cse644-iso-a ping -c 2 -W 3 1.1.1.1
+PING 1.1.1.1 (1.1.1.1): 56 data bytes
+ping: sendto: Network unreachable
+[exit status: 1 — failure expected here, this is the evidence]
+
+$ docker exec cse644-iso-a wget -T 5 -qO- http://example.com
+wget: bad address 'example.com'
+[exit status: 1 — failure expected here, this is the evidence]
+
+$ docker exec cse644-iso-a ip route
+172.31.0.0/24 dev eth0 scope link  src 172.31.0.2 
+^ no default gateway to the outside: --internal removed the NAT route.
+
+---------------------------------------------------------------
+STEP: A container on the normal bridge cannot reach the isolated containers either
+---------------------------------------------------------------
+isolated container IP: 172.31.0.3
+
+$ docker exec cse644-net-a ping -c 2 -W 3 172.31.0.3
+PING 172.31.0.3 (172.31.0.3): 56 data bytes
+
+--- 172.31.0.3 ping statistics ---
+2 packets transmitted, 0 packets received, 100% packet loss
+[exit status: 1 — failure expected here, this is the evidence]
+
+---------------------------------------------------------------
+STEP: Summary of the three network modes used
+---------------------------------------------------------------
+
+$ docker network ls --filter name=cse644 --format 'table {{.Name}}\t{{.Driver}}\t{{.Scope}}'
+NAME              DRIVER    SCOPE
+cse644-bridge     bridge    local
+cse644-edge       bridge    local
+cse644-internal   bridge    local
+
+$ docker network inspect cse644-bridge cse644-internal --format '{{.Name}}: internal={{.Internal}} containers={{len .Containers}}'
+cse644-bridge: internal=false containers=2
+cse644-internal: internal=true containers=2
+
+---------------------------------------------------------------
+STEP: Tear down the networking demo containers and networks
+---------------------------------------------------------------
+
+$ docker network ls --filter name=cse644 --format '{{.Name}}' | wc -l
+1
+
+===============================================================
+ done: 2026-08-08 06:03:24 UTC
+===============================================================

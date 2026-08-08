@@ -1,0 +1,448 @@
+===============================================================
+ CSE644 Docker Assignment — 05-haproxy-nginx
+ host date : 2026-08-08 06:01:35 UTC
+ docker    : Docker version 29.1.3, build 29.1.3-0ubuntu3~22.04.2
+===============================================================
+
+---------------------------------------------------------------
+STEP: Project files: HAProxy configuration, Nginx configuration, compose file
+---------------------------------------------------------------
+
+$ cat /mnt/c/Users/zhang/OneDrive/Desktop/cse644-docker/03-haproxy-nginx/haproxy/haproxy.cfg
+#---------------------------------------------------------------------
+# CSE644 requirement 7: HAProxy acting as a proxy in front of Nginx.
+# Two Nginx backends are declared so the evidence also shows load
+# balancing and health checking, not just a single forwarded request.
+#---------------------------------------------------------------------
+
+global
+    log stdout format raw local0 info
+    maxconn 2048
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    option  forwardfor          # pass the real client IP to Nginx
+    timeout connect 5s
+    timeout client  30s
+    timeout server  30s
+    retries 3
+    option  redispatch          # retry on a DIFFERENT server, not the dead one
+
+#---------------------------------------------------------------------
+# Public entry point. Everything the client sees comes through here.
+#---------------------------------------------------------------------
+frontend http_in
+    bind *:80
+
+    # Prove at the client that the response passed through HAProxy
+    http-response set-header X-Proxied-By "haproxy/%[env(HOSTNAME)]"
+    http-request set-header X-Forwarded-Proto http
+
+    default_backend nginx_pool
+
+#---------------------------------------------------------------------
+# Nginx pool. `check` uses the /health endpoint the Nginx image exposes.
+#---------------------------------------------------------------------
+backend nginx_pool
+    balance roundrobin
+    option httpchk GET /health
+    http-check expect status 200
+
+    # Docker's embedded DNS only exists once the containers are on the network,
+    # so do not require web1/web2 to resolve while the config is being parsed.
+    default-server init-addr last,libc,none
+
+    # Tell the client which backend served the request
+    http-response set-header X-Backend-Server %[srv_name]
+
+    server web1 web1:80 check inter 3s fall 3 rise 2
+    server web2 web2:80 check inter 3s fall 3 rise 2
+
+#---------------------------------------------------------------------
+# Stats page: visual proof that HAProxy sees both Nginx servers as UP.
+#---------------------------------------------------------------------
+listen stats
+    bind *:8404
+    stats enable
+    stats uri /
+    stats refresh 5s
+    stats show-legends
+
+$ cat /mnt/c/Users/zhang/OneDrive/Desktop/cse644-docker/03-haproxy-nginx/nginx/default.conf
+# Log the client IP HAProxy forwarded, not HAProxy's own address.
+# log_format belongs to the http context, so it lives outside the server block.
+log_format proxied '$remote_addr fwd=$http_x_forwarded_for "$request" $status served_by=$hostname';
+
+server {
+    listen       80;
+    server_name  _;
+
+    root  /usr/share/nginx/html;
+    index index.html;
+
+    # $hostname is the container name, so the client can tell web1 from web2
+    add_header X-Served-By $hostname always;
+
+    access_log /var/log/nginx/access.log proxied;
+
+    location / {
+        # Rewrite the placeholder in the page with this container's hostname
+        sub_filter '__BACKEND__' '$hostname';
+        sub_filter_once off;
+        sub_filter_types text/html;
+        try_files $uri $uri/ =404;
+    }
+
+    location /whoami {
+        default_type text/plain;
+        return 200 "$hostname\n";
+    }
+
+    location /health {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+}
+
+$ cat /mnt/c/Users/zhang/OneDrive/Desktop/cse644-docker/03-haproxy-nginx/docker-compose.yml
+# Requirement 7: HAProxy as a proxy in front of Nginx.
+#
+#   client -> localhost:8082 -> haproxy:80 -> (web1:80 | web2:80)
+#
+# Only HAProxy publishes host ports. The Nginx containers sit on the `edge`
+# network with no port mapping, so from outside this machine the proxy is the
+# only way in — that is what makes this a proxy demonstration rather than two
+# independently exposed web servers.
+
+name: cse644-proxy
+
+services:
+  haproxy:
+    build: ./haproxy
+    image: cse644-haproxy:1.0
+    container_name: cse644-haproxy
+    ports:
+      - "8082:80"     # public entry point
+      - "8404:8404"   # HAProxy stats page
+    networks:
+      - edge
+    depends_on:
+      web1:
+        condition: service_healthy
+      web2:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web1:
+    build: ./nginx
+    image: cse644-proxy-nginx:1.0
+    container_name: cse644-web1
+    hostname: web1
+    networks:
+      - edge
+    # deliberately no `ports:` — not reachable from the host
+    restart: unless-stopped
+
+  web2:
+    build: ./nginx                  # same build context as web1
+    image: cse644-proxy-nginx:1.0   # same image, second replica
+    container_name: cse644-web2
+    hostname: web2
+    networks:
+      - edge
+    depends_on:
+      - web1
+    restart: unless-stopped
+
+networks:
+  edge:
+    name: cse644-edge
+    driver: bridge
+
+---------------------------------------------------------------
+STEP: Build and start the project
+---------------------------------------------------------------
+
+$ docker compose -f /mnt/c/Users/zhang/OneDrive/Desktop/cse644-docker/03-haproxy-nginx/docker-compose.yml up -d --build
+time="2026-08-07T23:01:36-07:00" level=warning msg="Docker Compose requires buildx plugin to be installed"
+ Image cse644-proxy-nginx:1.0 Building 
+ Image cse644-proxy-nginx:1.0 Building 
+Sending build context to Docker daemon  1.969kB
+Step 1/9 : FROM nginx:1.27-alpine
+ ---> 65645c7bb6a0
+Step 2/9 : LABEL org.opencontainers.image.title="cse644-proxy-nginx"       org.opencontainers.image.description="Nginx backend served through HAProxy for CSE644 Docker assignment"       course="CSE644 Cloud Computing"
+ ---> Running in 7eb6b818d7d8
+ ---> Removed intermediate container 7eb6b818d7d8
+ ---> 9087b85351da
+Step 3/9 : RUN rm -rf /usr/share/nginx/html/*
+ ---> Running in 029ced893407
+ ---> Removed intermediate container 029ced893407
+ ---> f0797542cae6
+Step 4/9 : COPY html/ /usr/share/nginx/html/
+ ---> 20f4e63532bb
+Step 5/9 : COPY default.conf /etc/nginx/conf.d/default.conf
+ ---> 484030acfd29
+Step 6/9 : RUN nginx -t
+ ---> Running in 449a4ef6f974
+[91m2026/08/08 06:01:37 [warn] 1#1: duplicate MIME type "text/html" in /etc/nginx/conf.d/default.conf:21
+nginx: [warn] duplicate MIME type "text/html" in /etc/nginx/conf.d/default.conf:21
+[0m[91mnginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+[0m[91mnginx: configuration file /etc/nginx/nginx.conf test is successful
+[0m ---> Removed intermediate container 449a4ef6f974
+ ---> 62c3ef58eec7
+Step 7/9 : EXPOSE 80
+ ---> Running in a236135bb613
+ ---> Removed intermediate container a236135bb613
+ ---> bf08caf57c0c
+Step 8/9 : HEALTHCHECK --interval=10s --timeout=3s --retries=3   CMD wget -qO- http://127.0.0.1/health || exit 1
+ ---> Running in a59e56b47f9b
+ ---> Removed intermediate container a59e56b47f9b
+ ---> 00510bd5361e
+Step 9/9 : LABEL com.docker.compose.image.builder=classic
+ ---> Running in 9423a65968d3
+ ---> Removed intermediate container 9423a65968d3
+ ---> f3f1f5b84ff2
+Successfully built f3f1f5b84ff2
+Successfully tagged cse644-proxy-nginx:1.0
+ Image cse644-proxy-nginx:1.0 Built 
+ Image cse644-proxy-nginx:1.0 Built 
+ Image cse644-proxy-nginx:1.0 Building 
+ Image cse644-proxy-nginx:1.0 Building 
+Sending build context to Docker daemon  1.969kB
+Step 1/9 : FROM nginx:1.27-alpine
+ ---> 65645c7bb6a0
+Step 2/9 : LABEL org.opencontainers.image.title="cse644-proxy-nginx"       org.opencontainers.image.description="Nginx backend served through HAProxy for CSE644 Docker assignment"       course="CSE644 Cloud Computing"
+ ---> Using cache
+ ---> 9087b85351da
+Step 3/9 : RUN rm -rf /usr/share/nginx/html/*
+ ---> Using cache
+ ---> f0797542cae6
+Step 4/9 : COPY html/ /usr/share/nginx/html/
+ ---> Using cache
+ ---> 20f4e63532bb
+Step 5/9 : COPY default.conf /etc/nginx/conf.d/default.conf
+ ---> Using cache
+ ---> 484030acfd29
+Step 6/9 : RUN nginx -t
+ ---> Using cache
+ ---> 62c3ef58eec7
+Step 7/9 : EXPOSE 80
+ ---> Using cache
+ ---> bf08caf57c0c
+Step 8/9 : HEALTHCHECK --interval=10s --timeout=3s --retries=3   CMD wget -qO- http://127.0.0.1/health || exit 1
+ ---> Using cache
+ ---> 00510bd5361e
+Step 9/9 : LABEL com.docker.compose.image.builder=classic
+ ---> Using cache
+ ---> f3f1f5b84ff2
+Successfully built f3f1f5b84ff2
+Successfully tagged cse644-proxy-nginx:1.0
+ Image cse644-proxy-nginx:1.0 Built 
+ Image cse644-proxy-nginx:1.0 Built 
+ Image cse644-haproxy:1.0 Building 
+ Image cse644-haproxy:1.0 Building 
+Sending build context to Docker daemon  1.218kB
+Step 1/8 : FROM haproxy:3.0-alpine
+ ---> 7c8dac975b9d
+Step 2/8 : LABEL org.opencontainers.image.title="cse644-haproxy"       org.opencontainers.image.description="HAProxy fronting two Nginx backends for CSE644 Docker assignment"       course="CSE644 Cloud Computing"
+ ---> Running in c7b2c05e4641
+ ---> Removed intermediate container c7b2c05e4641
+ ---> a618f6c00ab3
+Step 3/8 : COPY haproxy.cfg /usr/local/etc/haproxy/haproxy.cfg
+ ---> 78ca92078269
+Step 4/8 : USER root
+ ---> Running in 95fb65b55523
+ ---> Removed intermediate container 95fb65b55523
+ ---> bc21ba327b59
+Step 5/8 : RUN haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg
+ ---> Running in 090eac83cf56
+[91m[NOTICE]   (1) : config : [/usr/local/etc/haproxy/haproxy.cfg:50] : 'server nginx_pool/web1' : could not resolve address 'web1', disabling server.
+[0m[91m[NOTICE]   (1) : config : [/usr/local/etc/haproxy/haproxy.cfg:51] : 'server nginx_pool/web2' : could not resolve address 'web2', disabling server.
+[0m ---> Removed intermediate container 090eac83cf56
+ ---> 45b3b65e4cf5
+Step 6/8 : USER haproxy
+ ---> Running in 48d13d313d33
+ ---> Removed intermediate container 48d13d313d33
+ ---> 25869c4d30d2
+Step 7/8 : EXPOSE 80 8404
+ ---> Running in 1b7445cd9974
+ ---> Removed intermediate container 1b7445cd9974
+ ---> a4d472ea3702
+Step 8/8 : LABEL com.docker.compose.image.builder=classic
+ ---> Running in dd95c371777a
+ ---> Removed intermediate container dd95c371777a
+ ---> 4f25f62031cd
+Successfully built 4f25f62031cd
+Successfully tagged cse644-haproxy:1.0
+ Image cse644-haproxy:1.0 Built 
+ Image cse644-haproxy:1.0 Built 
+ Network cse644-edge Creating 
+ Network cse644-edge Created 
+ Container cse644-web1 Creating 
+ Container cse644-web1 Created 
+ Container cse644-web2 Creating 
+ Container cse644-web2 Created 
+ Container cse644-haproxy Creating 
+ Container cse644-haproxy Created 
+ Container cse644-web1 Starting 
+ Container cse644-web1 Started 
+ Container cse644-web2 Starting 
+ Container cse644-web2 Started 
+ Container cse644-web2 Waiting 
+ Container cse644-web1 Waiting 
+ Container cse644-web1 Healthy 
+ Container cse644-web2 Healthy 
+ Container cse644-haproxy Starting 
+ Container cse644-haproxy Started 
+
+$ docker compose -f /mnt/c/Users/zhang/OneDrive/Desktop/cse644-docker/03-haproxy-nginx/docker-compose.yml ps
+NAME             IMAGE                    COMMAND                  SERVICE   CREATED          STATUS                    PORTS
+cse644-haproxy   cse644-haproxy:1.0       "docker-entrypoint.s…"   haproxy   11 seconds ago   Up Less than a second     0.0.0.0:8404->8404/tcp, [::]:8404->8404/tcp, 0.0.0.0:8082->80/tcp, [::]:8082->80/tcp
+cse644-web1      cse644-proxy-nginx:1.0   "/docker-entrypoint.…"   web1      11 seconds ago   Up 11 seconds (healthy)   80/tcp
+cse644-web2      cse644-proxy-nginx:1.0   "/docker-entrypoint.…"   web2      11 seconds ago   Up 11 seconds (healthy)   80/tcp
+
+---------------------------------------------------------------
+STEP: Both services are running
+---------------------------------------------------------------
+
+$ docker ps --filter name=cse644- --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+NAMES                 IMAGE                     STATUS                    PORTS
+cse644-haproxy        cse644-haproxy:1.0        Up Less than a second     0.0.0.0:8404->8404/tcp, [::]:8404->8404/tcp, 0.0.0.0:8082->80/tcp, [::]:8082->80/tcp
+cse644-web2           cse644-proxy-nginx:1.0    Up 11 seconds (healthy)   80/tcp
+cse644-web1           cse644-proxy-nginx:1.0    Up 11 seconds (healthy)   80/tcp
+cse644-python-web     cse644-python-web:1.0     Up 38 seconds (healthy)   0.0.0.0:8888->8888/tcp, [::]:8888->8888/tcp
+cse644-custom-nginx   cse644-custom-nginx:1.0   Up 45 seconds (healthy)   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp
+
+---------------------------------------------------------------
+STEP: Only HAProxy publishes host ports — the Nginx backends publish none
+---------------------------------------------------------------
+
+$ docker port cse644-haproxy
+80/tcp -> 0.0.0.0:8082
+80/tcp -> [::]:8082
+8404/tcp -> 0.0.0.0:8404
+8404/tcp -> [::]:8404
+
+$ docker port cse644-web1 || echo '(no published ports — reachable only through the proxy from outside this host)'
+
+$ docker port cse644-web2 || echo '(no published ports — reachable only through the proxy from outside this host)'
+
+---------------------------------------------------------------
+STEP: A request to HAProxy is forwarded to Nginx
+---------------------------------------------------------------
+
+$ curl -sI http://localhost:8082/
+HTTP/1.1 200 OK
+server: nginx/1.27.5
+date: Sat, 08 Aug 2026 06:02:12 GMT
+content-type: text/html
+x-served-by: web2
+x-backend-server: web2
+x-proxied-by: haproxy/d117e15308a3
+
+
+X-Proxied-By is added by HAProxy, X-Served-By is added by Nginx.
+Both headers present in one response = the request passed through both.
+
+---------------------------------------------------------------
+STEP: Round-robin proof: ten requests alternate between the two Nginx backends
+---------------------------------------------------------------
+
+$ for i in $(seq 10); do printf '  request %2d -> ' $i; curl -s http://localhost:8082/whoami; done
+  request  1 -> web1
+  request  2 -> web2
+  request  3 -> web1
+  request  4 -> web2
+  request  5 -> web1
+  request  6 -> web2
+  request  7 -> web1
+  request  8 -> web2
+  request  9 -> web1
+  request 10 -> web2
+
+---------------------------------------------------------------
+STEP: Backend distribution counted
+---------------------------------------------------------------
+
+$ for i in $(seq 20); do curl -s http://localhost:8082/whoami; done | sort | uniq -c
+     10 web1
+     10 web2
+
+---------------------------------------------------------------
+STEP: The proxied page itself names the backend that served it
+---------------------------------------------------------------
+
+$ curl -s http://localhost:8082/ | grep -A1 'class="backend"'
+    <div class="backend">web1</div>
+
+
+---------------------------------------------------------------
+STEP: HAProxy health checks see both Nginx servers as UP
+---------------------------------------------------------------
+
+$ curl -s 'http://localhost:8404/;csv' | awk -F, 'NR==1||$1=="nginx_pool" {print $1","$2","$18","$5}' | column -s, -t
+# pxname    svname   status  scur
+nginx_pool  web1     UP      0
+nginx_pool  web2     UP 1/3  0
+nginx_pool  BACKEND  UP      0
+
+---------------------------------------------------------------
+STEP: Nginx access log shows the forwarded client address (X-Forwarded-For)
+---------------------------------------------------------------
+
+$ docker logs cse644-web1 2>&1 | tail -4
+172.20.0.4 fwd=172.20.0.1 "GET /whoami HTTP/1.1" 200 served_by=web1
+172.20.0.4 fwd=172.20.0.1 "GET /whoami HTTP/1.1" 200 served_by=web1
+172.20.0.4 fwd=172.20.0.1 "GET /whoami HTTP/1.1" 200 served_by=web1
+172.20.0.4 fwd=172.20.0.1 "GET / HTTP/1.1" 200 served_by=web1
+
+$ docker logs cse644-web2 2>&1 | tail -4
+172.20.0.4 fwd=172.20.0.1 "GET /whoami HTTP/1.1" 200 served_by=web2
+172.20.0.4 fwd=172.20.0.1 "GET /whoami HTTP/1.1" 200 served_by=web2
+172.20.0.4 fwd=172.20.0.1 "GET /whoami HTTP/1.1" 200 served_by=web2
+172.20.0.4 fwd=172.20.0.1 "GET /whoami HTTP/1.1" 200 served_by=web2
+
+---------------------------------------------------------------
+STEP: Failover: stop web1 and confirm HAProxy keeps serving from web2
+---------------------------------------------------------------
+
+$ docker stop cse644-web1
+cse644-web1
+
+$ sleep 12
+
+$ for i in $(seq 6); do printf '  request %d -> ' $i; curl -s http://localhost:8082/whoami; done
+  request 1 -> web2
+  request 2 -> web2
+  request 3 -> web2
+  request 4 -> web2
+  request 5 -> web2
+  request 6 -> web2
+
+$ curl -s 'http://localhost:8404/;csv' | awk -F, '$1=="nginx_pool" {print $2" = "$18}'
+web1 = DOWN
+web2 = UP
+BACKEND = UP
+
+$ docker start cse644-web1
+cse644-web1
+
+$ sleep 12
+
+$ for i in $(seq 6); do printf '  request %d -> ' $i; curl -s http://localhost:8082/whoami; done
+  request 1 -> web2
+  request 2 -> web1
+  request 3 -> web2
+  request 4 -> web1
+  request 5 -> web2
+  request 6 -> web1
+
+Project left running: http://localhost:8082/ (site) and http://localhost:8404/ (stats).
+
+===============================================================
+ done: 2026-08-08 06:02:44 UTC
+===============================================================

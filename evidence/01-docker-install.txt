@@ -1,0 +1,120 @@
+===============================================================
+ CSE644 Docker Assignment — 01-docker-install
+ host date : 2026-08-08 06:01:06 UTC
+ docker    : Docker version 29.1.3, build 29.1.3-0ubuntu3~22.04.2
+===============================================================
+
+---------------------------------------------------------------
+STEP: Host and kernel
+---------------------------------------------------------------
+
+$ uname -a
+Linux luioiul 6.6.87.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+
+$ cat /etc/os-release | head -3
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+
+---------------------------------------------------------------
+STEP: Docker client and server versions
+---------------------------------------------------------------
+
+$ docker --version
+Docker version 29.1.3, build 29.1.3-0ubuntu3~22.04.2
+
+$ docker compose version
+Docker Compose version v5.3.1
+
+$ docker version
+Client:
+ Version:           29.1.3
+ API version:       1.52
+ Go version:        go1.24.4
+ Git commit:        29.1.3-0ubuntu3~22.04.2
+ Built:             Wed Apr 29 22:18:59 2026
+ OS/Arch:           linux/amd64
+ Context:           default
+
+Server:
+ Engine:
+  Version:          29.1.3
+  API version:      1.52 (minimum version 1.44)
+  Go version:       go1.24.4
+  Git commit:       29.1.3-0ubuntu3~22.04.2
+  Built:            Wed Apr 29 22:18:59 2026
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          2.2.1
+  GitCommit:        
+ runc:
+  Version:          1.3.4-0ubuntu1~22.04.1
+  GitCommit:        
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        
+
+---------------------------------------------------------------
+STEP: Docker daemon is running
+---------------------------------------------------------------
+
+$ pgrep -a dockerd | head -2
+335 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+
+$ systemctl is-active docker 2>/dev/null || service docker status 2>&1 | head -3
+active
+
+---------------------------------------------------------------
+STEP: Docker engine information
+---------------------------------------------------------------
+
+$ docker info --format 'Server version : {{.ServerVersion}}'
+Server version : 29.1.3
+
+$ docker info --format 'Storage driver : {{.Driver}}'
+Storage driver : overlayfs
+
+$ docker info --format 'Operating sys  : {{.OperatingSystem}}'
+Operating sys  : Ubuntu 22.04.5 LTS
+
+$ docker info --format 'CPUs / Memory  : {{.NCPU}} / {{.MemTotal}}'
+CPUs / Memory  : 32 / 16620040192
+
+$ docker info --format 'Containers     : {{.Containers}} (running {{.ContainersRunning}})'
+Containers     : 4 (running 1)
+
+$ docker info --format 'Images         : {{.Images}}'
+Images         : 37
+
+---------------------------------------------------------------
+STEP: End-to-end check: run the official hello-world image
+---------------------------------------------------------------
+
+$ docker run --rm hello-world
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+
+===============================================================
+ done: 2026-08-08 06:01:07 UTC
+===============================================================

@@ -1,0 +1,140 @@
+===============================================================
+ CSE644 Docker Assignment — 06-persistent-volume
+ host date : 2026-08-08 06:02:44 UTC
+ docker    : Docker version 29.1.3, build 29.1.3-0ubuntu3~22.04.2
+===============================================================
+
+---------------------------------------------------------------
+STEP: Create a named volume
+---------------------------------------------------------------
+
+$ docker volume create cse644-data
+cse644-data
+
+$ docker volume ls --filter name=cse644-data
+DRIVER    VOLUME NAME
+local     cse644-data
+
+$ docker volume inspect cse644-data
+[
+    {
+        "CreatedAt": "2026-08-07T23:02:45-07:00",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/cse644-data/_data",
+        "Name": "cse644-data",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+
+---------------------------------------------------------------
+STEP: Container #1: mount the volume at /data and write to it
+---------------------------------------------------------------
+
+$ docker run -d --name cse644-vol-demo -v cse644-data:/data alpine:3.20 sleep 3600
+45b02e9596831d451e98771dc688b1d81db411f1ab8e788b29c68327834a3a2f
+
+$ docker exec cse644-vol-demo sh -c 'echo "line 1 written by container #1 at $(date -u +%H:%M:%S), hostname $(hostname)" >> /data/persistent.log'
+
+$ docker exec cse644-vol-demo sh -c 'echo "line 2 written by container #1" >> /data/persistent.log'
+
+$ docker exec cse644-vol-demo sh -c 'echo "this file is NOT on the volume" > /tmp/ephemeral.txt'
+
+$ docker exec cse644-vol-demo cat /data/persistent.log
+line 1 written by container #1 at 06:02:46, hostname 45b02e959683
+line 2 written by container #1
+
+$ docker exec cse644-vol-demo cat /tmp/ephemeral.txt
+this file is NOT on the volume
+
+$ docker exec cse644-vol-demo df -h /data | tail -1
+/dev/sdd               1006.9G     45.7G    909.9G   5% /data
+
+$ docker inspect cse644-vol-demo --format 'mount: {{range .Mounts}}{{.Type}} {{.Name}} -> {{.Destination}}{{end}}'
+mount: volume cse644-data -> /data
+
+---------------------------------------------------------------
+STEP: DESTROY the container completely
+---------------------------------------------------------------
+
+$ docker rm -f cse644-vol-demo
+cse644-vol-demo
+
+$ docker ps -a --filter name=cse644-vol-demo --format '{{.Names}}' | wc -l
+0
+(0 containers left with that name — the container no longer exists)
+
+---------------------------------------------------------------
+STEP: The volume still exists on its own
+---------------------------------------------------------------
+
+$ docker volume ls --filter name=cse644-data
+DRIVER    VOLUME NAME
+local     cse644-data
+
+---------------------------------------------------------------
+STEP: Container #2: brand new container, same volume
+---------------------------------------------------------------
+
+$ docker run -d --name cse644-vol-demo -v cse644-data:/data alpine:3.20 sleep 3600
+c0f3139ccd34226108bbc111b8a921fa7241d3bcf3773b8903144aa24b66aa30
+
+$ docker inspect cse644-vol-demo --format 'container id: {{.Id}}'
+container id: c0f3139ccd34226108bbc111b8a921fa7241d3bcf3773b8903144aa24b66aa30
+
+---------------------------------------------------------------
+STEP: The data written by container #1 is still there
+---------------------------------------------------------------
+
+$ docker exec cse644-vol-demo cat /data/persistent.log
+line 1 written by container #1 at 06:02:46, hostname 45b02e959683
+line 2 written by container #1
+
+^ written by the container that was deleted. Data survived.
+
+---------------------------------------------------------------
+STEP: The non-volume file did NOT survive — this is the control case
+---------------------------------------------------------------
+
+$ docker exec cse644-vol-demo cat /tmp/ephemeral.txt
+cat: can't open '/tmp/ephemeral.txt': No such file or directory
+[exit status: 1 — failure expected here, this is the evidence]
+/tmp was part of the container's writable layer, which was destroyed with it.
+
+---------------------------------------------------------------
+STEP: Container #2 appends to the same volume
+---------------------------------------------------------------
+
+$ docker exec cse644-vol-demo sh -c 'echo "line 3 written by container #2 at $(date -u +%H:%M:%S), hostname $(hostname)" >> /data/persistent.log'
+
+$ docker exec cse644-vol-demo cat /data/persistent.log
+line 1 written by container #1 at 06:02:46, hostname 45b02e959683
+line 2 written by container #1
+line 3 written by container #2 at 06:02:49, hostname c0f3139ccd34
+
+---------------------------------------------------------------
+STEP: Recreate once more to show the accumulated history persists
+---------------------------------------------------------------
+
+$ docker rm -f cse644-vol-demo
+cse644-vol-demo
+
+$ docker run --rm -v cse644-data:/data alpine:3.20 cat /data/persistent.log
+line 1 written by container #1 at 06:02:46, hostname 45b02e959683
+line 2 written by container #1
+line 3 written by container #2 at 06:02:49, hostname c0f3139ccd34
+
+---------------------------------------------------------------
+STEP: Where the volume actually lives on the host
+---------------------------------------------------------------
+
+$ docker volume inspect cse644-data --format 'mountpoint: {{.Mountpoint}}'
+mountpoint: /var/lib/docker/volumes/cse644-data/_data
+
+$ sudo -n ls -l $(docker volume inspect cse644-data --format '{{.Mountpoint}}') 2>/dev/null || echo '(host path is root-owned; contents shown through a container above)'
+(host path is root-owned; contents shown through a container above)
+
+===============================================================
+ done: 2026-08-08 06:02:50 UTC
+===============================================================
